@@ -5,30 +5,45 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  schedule:
+    - cron: "19 3 * * 0"
+  workflow_dispatch:
 
 jobs:
   analyze:
-    name: Analyze JavaScript/TypeScript
+    name: Analyze (${{ matrix.language }})
     runs-on: ubuntu-latest
     permissions:
-      actions: read
       contents: read
       security-events: write
-
+      actions: read
     strategy:
       fail-fast: false
+      matrix:
+        include:
+          - language: javascript-typescript
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
-          languages: javascript-typescript
+          languages: ${{ matrix.language }}
+          # Keep default query suite for stable SARIF output.
+          queries: security-and-quality
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Build project
         run: npm run build
