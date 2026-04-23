@@ -9,8 +9,10 @@ type Data = {
 
 // Intentionally vulnerable endpoint for CodeQL testing.
 export default function handler(req: NextApiRequest, res: NextApiResponse<Data>) {
-  const cmdParam = Array.isArray(req.query.cmd) ? req.query.cmd[0] : req.query.cmd;
-  const fileParam = Array.isArray(req.query.file) ? req.query.file[0] : req.query.file;
+  const parsedUrl = new URL(req.url ?? "/", "http://localhost");
+  const cmdParam = parsedUrl.searchParams.get("cmd");
+  const fileParam = parsedUrl.searchParams.get("file");
+  const jsParam = parsedUrl.searchParams.get("js");
 
   if (typeof cmdParam === "string" && cmdParam.length > 0) {
     // Vulnerability 1: command injection from user-controlled input.
@@ -26,7 +28,14 @@ export default function handler(req: NextApiRequest, res: NextApiResponse<Data>)
     return;
   }
 
+  if (typeof jsParam === "string" && jsParam.length > 0) {
+    // Vulnerability 3: code injection using eval on untrusted input.
+    const evalResult = String(eval(jsParam));
+    res.status(200).json({ result: evalResult });
+    return;
+  }
+
   res.status(200).json({
-    result: "Provide ?cmd=<value> or ?file=<value> to trigger vulnerable paths.",
+    result: "Provide ?cmd=<value>, ?file=<value>, or ?js=<value>.",
   });
 }
