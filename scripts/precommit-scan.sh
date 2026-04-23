@@ -15,8 +15,20 @@ if ! command -v gitleaks >/dev/null 2>&1; then
 fi
 
 echo "Running Gitleaks staged scan..."
-scan_output="$(gitleaks detect --no-banner --redact --staged --config .gitleaks.toml 2>&1)"
-scan_exit=$?
+scan_cmd_desc=""
+if gitleaks detect --help 2>&1 | rg -- '--staged' >/dev/null 2>&1; then
+  scan_cmd_desc="gitleaks detect --staged"
+  scan_output="$(gitleaks detect --no-banner --redact --staged --config .gitleaks.toml 2>&1)"
+  scan_exit=$?
+elif gitleaks protect --help >/dev/null 2>&1; then
+  scan_cmd_desc="gitleaks protect --staged"
+  scan_output="$(gitleaks protect --no-banner --redact --staged --config .gitleaks.toml 2>&1)"
+  scan_exit=$?
+else
+  scan_cmd_desc="gitleaks detect (full working tree)"
+  scan_output="$(gitleaks detect --no-banner --redact --config .gitleaks.toml 2>&1)"
+  scan_exit=$?
+fi
 
 if [ $scan_exit -ne 0 ]; then
   echo "$scan_output"
@@ -28,6 +40,7 @@ if [ $scan_exit -ne 0 ]; then
     echo "❌ Secret detected! Fix before committing."
     echo "Remove secrets and use environment variables or a secrets manager. Then run: git add . && git commit"
   fi
+  echo "Scan mode used: ${scan_cmd_desc}"
   exit 1
 fi
 
