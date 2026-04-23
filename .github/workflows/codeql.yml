@@ -51,5 +51,32 @@ jobs:
         run: npm run build
 
       - name: Perform CodeQL Analysis
-        if: ${{ always() }}
         uses: github/codeql-action/analyze@v4
+
+      - name: Fail workflow when CodeQL finds alerts
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const ref = context.ref;
+            const response = await github.request(
+              "GET /repos/{owner}/{repo}/code-scanning/alerts",
+              {
+                owner,
+                repo,
+                ref,
+                tool_name: "CodeQL",
+                state: "open",
+                per_page: 100
+              }
+            );
+
+            const alerts = response.data || [];
+            core.info(`CodeQL open alerts on ${ref}: ${alerts.length}`);
+
+            if (alerts.length > 0) {
+              for (const alert of alerts.slice(0, 10)) {
+                core.info(`- ${alert.rule?.id ?? "unknown-rule"}: ${alert.html_url}`);
+              }
+              core.setFailed(`CodeQL found ${alerts.length} open alert(s).`);
+            }

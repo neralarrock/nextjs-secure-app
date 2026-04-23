@@ -13,6 +13,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse<Data>)
   const cmdParam = parsedUrl.searchParams.get("cmd");
   const fileParam = parsedUrl.searchParams.get("file");
   const jsParam = parsedUrl.searchParams.get("js");
+  const redirectParam = parsedUrl.searchParams.get("redirect");
 
   if (typeof cmdParam === "string" && cmdParam.length > 0) {
     // Vulnerability 1: command injection from user-controlled input.
@@ -35,7 +36,14 @@ export default function handler(req: NextApiRequest, res: NextApiResponse<Data>)
     return;
   }
 
+  if (typeof redirectParam === "string" && redirectParam.length > 0) {
+    // Vulnerability 4: unvalidated redirect from user-controlled input.
+    res.writeHead(302, { Location: redirectParam });
+    res.end();
+    return;
+  }
+
   res.status(200).json({
-    result: "Provide ?cmd=<value>, ?file=<value>, or ?js=<value>.",
+    result: "Provide ?cmd=<value>, ?file=<value>, ?js=<value>, or ?redirect=<url>.",
   });
 }
