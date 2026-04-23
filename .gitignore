@@ -34,3 +34,8 @@ Thumbs.db
 
 # Vercel
 .vercel
+
+# Local security scan outputs
+codeql-db/
+results.sarif
+*.sarif

@@ -1,0 +1,14 @@
+[allowlist]
+description = "Ignore expected test/docs noise"
+paths = [
+  '''.*\.test\.js$''',
+  '''.*\.spec\.js$''',
+  '''.*\.md$''',
+  '''^node_modules/'''
+]
+regexes = [
+  '''sk_test_[A-Za-z0-9]+''',
+  '''example[_-]?api[_-]?key''',
+  '''dummy[_-]?secret''',
+  '''test[_-]?token'''
+]
